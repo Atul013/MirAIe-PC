@@ -179,6 +179,37 @@ class TestACControllerUnit(unittest.TestCase):
         ctrl._device.set_temperature.assert_awaited_once_with(24.5)
         self.assertTrue(result.success)
 
+    def test_set_temp_non_numeric_rejected_without_connecting(self):
+        ctrl = self._make_controller()
+        ctrl._connect = AsyncMock(side_effect=AssertionError("must not connect"))
+
+        result = asyncio.run(ctrl.set_temp("warm"))
+
+        self.assertFalse(result.success)
+        self.assertIn("Invalid temperature", result.message)
+        ctrl._connect.assert_not_awaited()
+        ctrl._device.set_temperature.assert_not_awaited()
+
+    def test_malformed_modes_rejected_without_connecting(self):
+        ctrl = self._make_controller()
+        ctrl._connect = AsyncMock(side_effect=AssertionError("must not connect"))
+        cases = (
+            (ctrl.set_hvac_mode, None, "Invalid HVAC mode"),
+            (ctrl.set_fan_mode, 1, "Invalid Fan mode"),
+            (ctrl.set_v_swing, None, "Invalid v_swing mode"),
+            (ctrl.set_h_swing, float("inf"), "Invalid h_swing mode"),
+            (ctrl.set_display_mode, None, "Invalid display mode"),
+            (ctrl.set_preset_mode, [], "Invalid preset mode"),
+        )
+
+        for setter, value, expected_message in cases:
+            with self.subTest(setter=setter.__name__, value=value):
+                result = asyncio.run(setter(value))
+                self.assertFalse(result.success)
+                self.assertIn(expected_message, result.message)
+
+        ctrl._connect.assert_not_awaited()
+
     # ── get_status ────────────────────────────────────────────────────────
 
     def test_get_status_returns_data(self):
