@@ -178,7 +178,13 @@ class ACController:
         Returns:
             ACResult with success/failure details.
         """
-        val = float(val)
+        try:
+            val = float(val)
+        except (TypeError, ValueError, OverflowError):
+            return ACResult(
+                success=False,
+                message=f"Invalid temperature: {val!r}. Expected a number between {_TEMP_MIN} and {_TEMP_MAX}°C.",
+            )
         if not (_TEMP_MIN <= val <= _TEMP_MAX):
             return ACResult(
                 success=False,
@@ -190,7 +196,7 @@ class ACController:
         """Set HVAC mode (cool, dry, fan, heat, auto)."""
         try:
             m = HVACMode(mode.lower())
-        except ValueError:
+        except (AttributeError, TypeError, ValueError):
             valid = [e.value for e in HVACMode]
             return ACResult(success=False, message=f"Invalid HVAC mode: {mode}. Valid: {valid}")
         return await self._run(lambda: self._device.set_hvac_mode(m))
@@ -199,7 +205,7 @@ class ACController:
         """Set Fan mode (auto, low, medium, high, quiet)."""
         try:
             m = FanMode(mode.lower())
-        except ValueError:
+        except (AttributeError, TypeError, ValueError):
             valid = [e.value for e in FanMode]
             return ACResult(success=False, message=f"Invalid Fan mode: {mode}. Valid: {valid}")
         return await self._run(lambda: self._device.set_fan_mode(m))
@@ -208,7 +214,7 @@ class ACController:
         """Set Vertical Swing mode (0=auto, 1-5=positions)."""
         try:
             m = SwingMode(int(mode))
-        except ValueError:
+        except (TypeError, ValueError, OverflowError):
             valid = [e.value for e in SwingMode]
             return ACResult(success=False, message=f"Invalid v_swing mode: {mode}. Valid: {valid}")
         return await self._run(lambda: self._device.set_v_swing_mode(m))
@@ -217,7 +223,7 @@ class ACController:
         """Set Horizontal Swing mode (0=auto, 1-5=positions)."""
         try:
             m = SwingMode(int(mode))
-        except ValueError:
+        except (TypeError, ValueError, OverflowError):
             valid = [e.value for e in SwingMode]
             return ACResult(success=False, message=f"Invalid h_swing mode: {mode}. Valid: {valid}")
         return await self._run(lambda: self._device.set_h_swing_mode(m))
@@ -226,7 +232,7 @@ class ACController:
         """Set Display mode (on, off)."""
         try:
             m = DisplayMode(mode.lower())
-        except ValueError:
+        except (AttributeError, TypeError, ValueError):
             valid = [e.value for e in DisplayMode]
             return ACResult(success=False, message=f"Invalid display mode: {mode}. Valid: {valid}")
         return await self._run(lambda: self._device.set_display_mode(m))
@@ -235,7 +241,7 @@ class ACController:
         """Set Preset mode (none, eco, boost, clean)."""
         try:
             m = PresetMode(mode.lower())
-        except ValueError:
+        except (AttributeError, TypeError, ValueError):
             valid = [e.value for e in PresetMode]
             return ACResult(success=False, message=f"Invalid preset mode: {mode}. Valid: {valid}")
         return await self._run(lambda: self._device.set_preset_mode(m))
